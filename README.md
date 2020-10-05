@@ -1,88 +1,214 @@
-# Super Mario 64 Port
+# Super Mario 64 Nintendo Wii Port
 
-- This repo contains a full decompilation of Super Mario 64 (J), (U), and (E) with minor exceptions in the audio subsystem.
-- Naming and documentation of the source code and data structures are in progress.
-- Efforts to decompile the Shindou ROM steadily advance toward a matching build.
-- Beyond Nintendo 64, it can also target Linux and Windows natively.
-
-This repo does not include all assets necessary for compiling the game.
+This repo does **not** include all assets necessary for compiling the game.
 A prior copy of the game is required to extract the assets.
 
-## Building native executables
+## Building
 
-### Linux
+Successful compilation will result in a .dol being created in `build/VERSION_wii/sm64.VERSION.f3dex2e.dol` where `VERSION` is one of `us`, `eu`, `jp` or `sh`.
 
-1. Install prerequisites (Ubuntu): `sudo apt install -y git build-essential pkg-config libusb-1.0-0-dev libsdl2-dev`.
-2. Clone the repo: `git clone https://github.com/sm64-port/sm64-port.git`, which will create a directory `sm64-port` and then **enter** it `cd sm64-port`.
-3. Place a Super Mario 64 ROM called `baserom.<VERSION>.z64` into the repository's root directory for asset extraction, where `VERSION` can be `us`, `jp`, or `eu`.
-4. Run `make` to build. Qualify the version through `make VERSION=<VERSION>`. Add `-j4` to improve build speed (hardware dependent based on the amount of CPU cores available).
-5. The executable binary will be located at `build/<VERSION>_pc/sm64.<VERSION>.f3dex2e`.
+  - [Docker](#docker)
+  - [Linux / WSL (Ubuntu 18.04 or higher)](#linux--wsl-ubuntu)
+  - [Windows (MSYS2)](#windows-msys2)
 
-### Windows
+### Docker
 
-1. Install and update MSYS2, following all the directions listed on https://www.msys2.org/.
-2. From the start menu, launch MSYS2 MinGW and install required packages depending on your machine (do **NOT** launch "MSYS2 MSYS"):
-  * 64-bit: Launch "MSYS2 MinGW 64-bit" and install: `pacman -S git make python3 mingw-w64-x86_64-gcc`
-  * 32-bit (will also work on 64-bit machines): Launch "MSYS2 MinGW 32-bit" and install: `pacman -S git make python3 mingw-w64-i686-gcc`
-  * Do **NOT** by mistake install the package called simply `gcc`.
-3. The MSYS2 terminal has a _current working directory_ that initially is `C:\msys64\home\<username>` (home directory). At the prompt, you will see the current working directory in yellow. `~` is an alias for the home directory. You can change the current working directory to `My Documents` by entering `cd /c/Users/<username>/Documents`.
-4. Clone the repo: `git clone https://github.com/sm64-port/sm64-port.git`, which will create a directory `sm64-port` and then **enter** it `cd sm64-port`.
-5. Place a *Super Mario 64* ROM called `baserom.<VERSION>.z64` into the repository's root directory for asset extraction, where `VERSION` can be `us`, `jp`, or `eu`.
-6. Run `make` to build. Qualify the version through `make VERSION=<VERSION>`. Add `-j4` to improve build speed (hardware dependent based on the amount of CPU cores available).
-7. The executable binary will be located at `build/<VERSION>_pc/sm64.<VERSION>.f3dex2e.exe` inside the repository.
+The following assumes a basic understanding of [Docker](https://www.docker.com/); if you do not belong to the `docker` group, prefix those commands with `sudo`.
 
-#### Troubleshooting
+**Clone Repository:**
 
-1. If you get `make: gcc: command not found` or `make: gcc: No such file or directory` although the packages did successfully install, you probably launched the wrong MSYS2. Read the instructions again. The terminal prompt should contain "MINGW32" or "MINGW64" in purple text, and **NOT** "MSYS".
-2. If you get `Failed to open baserom.us.z64!` you failed to place the baserom in the repository. You can write `ls` to list the files in the current working directory. If you are in the `sm64-port` directory, make sure you see it here.
-3. If you get `make: *** No targets specified and no makefile found. Stop.`, you are not in the correct directory. Make sure the yellow text in the terminal ends with `sm64-port`. Use `cd <dir>` to enter the correct directory. If you write `ls` you should see all the project files, including `Makefile` if everything is correct.
-4. If you get any error, be sure MSYS2 packages are up to date by executing `pacman -Syu` and `pacman -Su`. If the MSYS2 window closes immediately after opening it, restart your computer.
-5. When you execute `gcc -v`, be sure you see `Target: i686-w64-mingw32` or `Target: x86_64-w64-mingw32`. If you see `Target: x86_64-pc-msys`, you either opened the wrong MSYS start menu entry or installed the incorrect gcc package.
+```sh
+git clone https://github.com/mkst/sm64-port.git --branch wii
+```
 
-### Debugging
+**Navigate into freshly checked out repo:**
 
-The code can be debugged using `gdb`. On Linux install the `gdb` package and execute `gdb <executable>`. On MSYS2 install by executing `pacman -S winpty gdb` and execute `winpty gdb <executable>`. The `winpty` program makes sure the keyboard works correctly in the terminal. Also consider changing the `-mwindows` compile flag to `-mconsole` to be able to see stdout/stderr as well as be able to press Ctrl+C to interrupt the program. In the Makefile, make sure you compile the sources using `-g` rather than `-O2` to include debugging symbols. See any online tutorial for how to use gdb.
+```sh
+cd sm64-port
+```
 
-## ROM building
+**Copy in baserom.XX.z64:**
 
-It is possible to build N64 ROMs as well with this repository. See https://github.com/n64decomp/sm64 for instructions.
+```sh
+cp /path/to/your/baserom.us.z64 ./ # change 'us' to 'eu', 'jp' or 'sh' as appropriate
+```
+
+**Build with pre-baked image:**
+
+Change `VERSION=us` if applicable. If on Windows replace `$(pwd):/sm64` with the path to the current directory, e.g. `"C:\path\to\sm64-port:/sm64"`.
+```sh
+docker run --rm -v $(pwd):/sm64 markstreet/sm64:wii make VERSION=us --jobs 4 # Linux/OSX
+```
+
+### Linux / WSL (Ubuntu)
+
+Tested successfully on **Ubuntu 18.04** and **20.04**. Does not work on **16.04**.
+
+```sh
+sudo su -
+
+apt-get update && \
+    apt-get install -y \
+        binutils-mips-linux-gnu \
+        bsdmainutils \
+        build-essential \
+        libaudiofile-dev \
+        pkg-config \
+        python3 \
+        wget \
+        zlib1g-dev
+
+wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/devkitpro-pacman.amd64.deb \
+  -O devkitpro.deb && \
+  echo ebc9f199da9a685e5264c87578efe29309d5d90f44f99f3dad9dcd96323fece3 devkitpro.deb | sha256sum --check && \
+  apt install -y ./devkitpro.deb && \
+  rm devkitpro.deb
+
+dkp-pacman -Syu wii-dev --noconfirm
+# if this ^^ fails with error about archive format, use a VPN to get yourself out of the USA and then try again.
+
+exit
+
+cd
+
+git clone https://github.com/mkst/sm64-port.git --branch wii
+
+cd sm64-port
+
+# go and copy the baserom to c:\temp (create that directory in Windows Explorer)
+cp /mnt/c/temp/baserom.us.z64 ./
+
+sudo chmod 644 ./baserom.us.z64
+
+export PATH="/opt/devkitpro/tools/bin/:~/sm64-port/tools:${PATH}"
+export DEVKITPRO=/opt/devkitpro
+export DEVKITPPC=/opt/devkitpro/devkitPPC
+
+make -j4
+```
+
+### Windows (MSYS2)
+
+WSL is the preferred route, but you can also use MSYS2 (MINGW64) to compile.
+
+For each instruction copy and paste the contents into the **MING64** console.
+
+**Get MSYS2:**
+
+Navigate to https://www.msys2.org/ and download the installer.
+
+**Install and Run MINGW64:**
+
+```
+Next, Next, Next, Finish (keep the box checked to "Run MSYS 64bit now").
+```
+
+**Add keyserver for package validation:**
+
+```sh
+pacman-key --recv BC26F752D25B92CE272E0F44F7FD5492264BB9D0 --keyserver keyserver.ubuntu.com
+pacman-key --lsign BC26F752D25B92CE272E0F44F7FD5492264BB9D0
+```
+
+**Add DevKitPro keyring:**
+
+```sh
+pacman -U --noconfirm https://downloads.devkitpro.org/devkitpro-keyring.pkg.tar.xz
+```
+
+**Add DevKitPro package repositories:**
+
+```sh
+cat <<EOF >> /etc/pacman.conf
+[dkp-libs]
+Server = https://downloads.devkitpro.org/packages
+[dkp-windows]
+Server = https://downloads.devkitpro.org/packages/windows
+EOF
+```
+
+**Update dependencies:**
+
+```sh
+pacman -Syu --noconfirm
+```
+
+MINGW64 may close itself when done, if it does, find `MSYS2 MinGW 64bit` in your Start Menu and open again.
+
+**Install Dependencies:**
+
+```sh
+pacman -S wii-dev git make python3 mingw-w64-x86_64-gcc --noconfirm
+```
+
+**Setup Environment Variables:**
+
+```sh
+export PATH=$PATH:/opt/devkitpro/tools/bin && echo "OK!"
+export DEVKITPRO=/opt/devkitpro && echo "OK!"
+export DEVKITPPC=/opt/devkitpro/devkitPPC && echo "OK!"
+```
+
+**Clone Repository:**
+
+```sh
+git clone https://github.com/mkst/sm64-port.git --branch wii
+```
+
+**Navigate into freshly checked out repo:**
+
+```sh
+cd sm64-port && echo "OK!"
+```
+
+**Copy in baserom.XX.z64:**
+
+This assumes that you have create the directory `c:\temp` via Windows Explorer and copied the Super Mario 64 `baserom.XX.z64` to it.
+```sh
+cp /c/temp/baserom.us.z64 ./ && echo "OK!" # change 'us' to 'eu', 'jp' or 'sh' as appropriate
+```
+
+**Compile:**
+
+```sh
+make VERSION=us --jobs 4 # change 'us' to 'eu', 'jp' or 'sh' as appropriate
+```
+
+### Other Operating Systems
+
+TBD; feel free to submit a PR.
 
 ## Project Structure
-	
-	sm64
-	├── actors: object behaviors, geo layout, and display lists
-	├── asm: handwritten assembly code, rom header
-	│   └── non_matchings: asm for non-matching sections
-	├── assets: animation and demo data
-	│   ├── anims: animation data
-	│   └── demos: demo data
-	├── bin: C files for ordering display lists and textures
-	├── build: output directory
-	├── data: behavior scripts, misc. data
-	├── doxygen: documentation infrastructure
-	├── enhancements: example source modifications
-	├── include: header files
-	├── levels: level scripts, geo layout, and display lists
-	├── lib: SDK library code
-	├── rsp: audio and Fast3D RSP assembly code
-	├── sound: sequences, sound samples, and sound banks
-	├── src: C source code for game
-	│   ├── audio: audio code
-	│   ├── buffers: stacks, heaps, and task buffers
-	│   ├── engine: script processing engines and utils
-	│   ├── game: behaviors and rest of game source
-	│   ├── goddard: Mario intro screen
-	│   ├── menu: title screen and file, act, and debug level selection menus
-	│   └── pc: port code, audio and video renderer
-	├── text: dialog, level names, act names
-	├── textures: skybox and generic texture data
-	└── tools: build tools
+
+    sm64
+    ├── actors: object behaviors, geo layout, and display lists
+    ├── asm: handwritten assembly code, rom header
+    │   └── non_matchings: asm for non-matching sections
+    ├── assets: animation and demo data
+    │   ├── anims: animation data
+    │   └── demos: demo data
+    ├── bin: C files for ordering display lists and textures
+    ├── build: output directory
+    ├── data: behavior scripts, misc. data
+    ├── doxygen: documentation infrastructure
+    ├── enhancements: example source modifications
+    ├── include: header files
+    ├── levels: level scripts, geo layout, and display lists
+    ├── lib: SDK library code
+    ├── rsp: audio and Fast3D RSP assembly code
+    ├── sound: sequences, sound samples, and sound banks
+    ├── src: C source code for game
+    │   ├── audio: audio code
+    │   ├── buffers: stacks, heaps, and task buffers
+    │   ├── engine: script processing engines and utils
+    │   ├── game: behaviors and rest of game source
+    │   ├── goddard: Mario intro screen
+    │   ├── menu: title screen and file, act, and debug level selection menus
+    │   └── pc: port code, audio and video renderer
+    ├── text: dialog, level names, act names
+    ├── textures: skybox and generic texture data
+    └── tools: build tools
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to
-discuss what you would like to change.
-
-Run `clang-format` on your code to ensure it meets the project's coding standards.
-
-Official Discord: https://discord.gg/7bcNTPK
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

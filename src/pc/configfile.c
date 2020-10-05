@@ -6,6 +6,11 @@
 #include <assert.h>
 #include <ctype.h>
 
+#ifdef TARGET_WII
+#include <fat.h>
+#include <wiiuse/wpad.h>
+#endif
+
 #include "configfile.h"
 
 #define ARRAY_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
@@ -30,6 +35,7 @@ struct ConfigOption {
  *Config options and default values
  */
 bool configFullscreen            = false;
+#ifndef TARGET_WII
 // Keyboard mappings (scancode values)
 unsigned int configKeyA          = 0x26;
 unsigned int configKeyB          = 0x33;
@@ -44,7 +50,21 @@ unsigned int configKeyStickUp    = 0x11;
 unsigned int configKeyStickDown  = 0x1F;
 unsigned int configKeyStickLeft  = 0x1E;
 unsigned int configKeyStickRight = 0x20;
-
+#else
+unsigned int configKeyA          = WPAD_BUTTON_A;
+unsigned int configKeyB          = WPAD_BUTTON_B | WPAD_BUTTON_2;
+unsigned int configKeyStart      = WPAD_BUTTON_PLUS | WPAD_BUTTON_MINUS;
+unsigned int configKeyR          = WPAD_NUNCHUK_BUTTON_C;
+unsigned int configKeyZ          = WPAD_BUTTON_1 | WPAD_NUNCHUK_BUTTON_Z;
+unsigned int configKeyCUp        = WPAD_BUTTON_UP;
+unsigned int configKeyCDown      = WPAD_BUTTON_DOWN;
+unsigned int configKeyCLeft      = WPAD_BUTTON_LEFT;
+unsigned int configKeyCRight     = WPAD_BUTTON_RIGHT;
+unsigned int configKeyStickUp    = 0;
+unsigned int configKeyStickDown  = 0;
+unsigned int configKeyStickLeft  = 0;
+unsigned int configKeyStickRight = 0;
+#endif
 
 static const struct ConfigOption options[] = {
     {.name = "fullscreen",     .type = CONFIG_TYPE_BOOL, .boolValue = &configFullscreen},
@@ -57,10 +77,12 @@ static const struct ConfigOption options[] = {
     {.name = "key_cdown",      .type = CONFIG_TYPE_UINT, .uintValue = &configKeyCDown},
     {.name = "key_cleft",      .type = CONFIG_TYPE_UINT, .uintValue = &configKeyCLeft},
     {.name = "key_cright",     .type = CONFIG_TYPE_UINT, .uintValue = &configKeyCRight},
+#ifndef TARGET_WII
     {.name = "key_stickup",    .type = CONFIG_TYPE_UINT, .uintValue = &configKeyStickUp},
     {.name = "key_stickdown",  .type = CONFIG_TYPE_UINT, .uintValue = &configKeyStickDown},
     {.name = "key_stickleft",  .type = CONFIG_TYPE_UINT, .uintValue = &configKeyStickLeft},
     {.name = "key_stickright", .type = CONFIG_TYPE_UINT, .uintValue = &configKeyStickRight},
+#endif
 };
 
 // Reads an entire line from a file (excluding the newline character) and returns an allocated string
@@ -140,6 +162,9 @@ static unsigned int tokenize_string(char *str, int maxTokens, char **tokens) {
 
 // Loads the config file specified by 'filename'
 void configfile_load(const char *filename) {
+#ifdef TARGET_WII
+    fatInitDefault();
+#endif
     FILE *file;
     char *line;
 
@@ -204,6 +229,9 @@ void configfile_load(const char *filename) {
 
 // Writes the config file to 'filename'
 void configfile_save(const char *filename) {
+#ifdef TARGET_WII
+    fatInitDefault();
+#endif
     FILE *file;
 
     printf("Saving configuration to '%s'\n", filename);
