@@ -28,6 +28,10 @@
 *.app
 *.hex
 
+# Wii
+*.bin
+*.binobj
+
 # Debug files
 *.dSYM/
 *.su

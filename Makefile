@@ -464,6 +464,7 @@ ifeq ($(TARGET_WII),1)
   CC      := $(CROSS)gcc
   CXX     := $(CROSS)g++
   LD      := $(CXX)
+  JUST_LD := $(CROSS)ld
 endif
 
 # Platform-specific compiler and linker flags
@@ -860,9 +861,19 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 
 else
 ifeq ($(TARGET_WII),1)
-$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
-	$(LD) -L $(BUILD_DIR) -o $@.elf $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
-	elf2dol $@.elf $@
+
+$(BUILD_DIR)/$(TARGET).elf: $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) wii/app_booter.binobj
+	$(LD) -L $(BUILD_DIR) -o $(BUILD_DIR)/$(TARGET).elf $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) wii/app_booter.binobj $(LDFLAGS)
+
+%.dol: %.elf
+	elf2dol $< $@
+
+%.binobj: %.bin
+	$(JUST_LD) -r -b binary -o $@ $<
+
+wii/app_booter.bin:
+	$(MAKE) -C wii/
+
 else
 $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
 	$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
