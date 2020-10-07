@@ -177,7 +177,7 @@ void main_func(void) {
 #elif defined(ENABLE_GFX_DUMMY)
     rendering_api = &gfx_dummy_renderer_api;
     wm_api = &gfx_dummy_wm_api;
-#elif defined(TARGET_WII)
+#elif defined(TARGET_GX)
     rendering_api = &gfx_gx_api;
     wm_api = &gfx_wii;
 #endif
@@ -207,7 +207,7 @@ void main_func(void) {
         audio_api = &audio_sdl;
     }
 #endif
-#ifdef TARGET_WII
+#ifdef TARGET_GX
     if (audio_api == NULL && audio_wii.init()) {
         audio_api = &audio_wii;
     }

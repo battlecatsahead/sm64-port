@@ -1,4 +1,4 @@
-#ifdef TARGET_WII
+#ifdef TARGET_GX
 
 #include <malloc.h>
 #include <string.h>
@@ -86,6 +86,7 @@ static void update_tev(struct ShaderProgram *prg)
 static void update_vtx_desc(struct ShaderProgram *prg)
 {
     // clear description
+    GX_InvVtxCache();
     GX_ClearVtxDesc();
     // we always have a position xyz
     GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
@@ -275,7 +276,7 @@ static void gfx_gx_set_zmode_decal(UNUSED bool zmode_decal)
 
 static void gfx_gx_set_viewport(int x, int y, int width, int height)
 {
-    GX_SetViewport(x, y, width, height, 0.0f, 1.0f); // near z, far z
+    GX_SetViewport(x, y, width, height, 0.0f, 10000.0f); // near z, far z
 }
 
 static void gfx_gx_set_scissor(int x, int y, int width, int height)
@@ -390,6 +391,9 @@ static void gfx_gx_start_frame(void)
 static void gfx_gx_end_frame(void)
 {
     GX_DrawDone();
+
+    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GX_SetColorUpdate(GX_TRUE);
 }
 
 static void gfx_gx_finish_render(void)

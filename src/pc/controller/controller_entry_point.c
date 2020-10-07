@@ -8,8 +8,11 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include "controller_xinput.h"
-#elif defined(TARGET_WII)
+#elif defined(TARGET_GX)
+#ifdef __wii__
 #include "controller_wii.h"
+#endif
+#include "controller_gamecube.h"
 #else
 #include "controller_sdl.h"
 #endif
@@ -19,8 +22,13 @@
 #endif
 
 static struct ControllerAPI *controller_implementations[] = {
-#ifdef TARGET_WII
+#ifdef TARGET_GX
+#ifdef __wii__
     &controller_wii,
+#endif
+#ifdef __gamecube__
+    &controller_gamecube,
+#endif
 #else
     #if defined(_WIN32) || defined(_WIN64)
         &controller_xinput,
@@ -32,7 +40,7 @@ static struct ControllerAPI *controller_implementations[] = {
     #endif
         &controller_keyboard,
 #endif
-    &controller_recorded_tas,
+    //&controller_recorded_tas,
 };
 
 s32 osContInit(UNUSED OSMesgQueue *mq, u8 *controllerBits, UNUSED OSContStatus *status) {

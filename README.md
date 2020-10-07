@@ -1,11 +1,31 @@
-# Super Mario 64 Nintendo Wii Port
+# Super Mario 64 Dolphin Port
 
 This repo does **not** include all assets necessary for compiling the game.
 A prior copy of the game is required to extract the assets.
 
+
+## Known Issues
+
+This is a work-in-progress, most things are broken. It *does* boot on a real Wii, has not been tested on a Gamecube (yet).
+
+**Completely Broken:**
+ - The Z buffer
+ - Only implemented basic color/texture shaders
+
+**Broken:**
+ - Audio
+
+**Working:**
+ - Controls
+ - Saving
+
 ## Building
 
-Successful compilation will result in a .dol being created in `build/VERSION_wii/sm64.VERSION.f3dex2e.dol` where `VERSION` is one of `us`, `eu`, `jp` or `sh`.
+Successful compilation will result in a .dol being created in `build/VERSION_GX/boot.dol` where `VERSION` is one of `us`, `eu`, `jp` or `sh`, and `GX` is either `wii` or `cube`.
+
+Place the sm64.VERSION.f3dex2e.dol along with the `meta.xml` in a directory on your SDCARD and boot using the [Homebrew Channel](https://wiibrew.org/wiki/Homebrew_Channel).
+
+**Supported Build Methods:**
 
   - [Docker](#docker)
   - [Linux / WSL (Ubuntu 18.04 or higher)](#linux--wsl-ubuntu)

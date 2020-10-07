@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+ <app version="1">
+   <name>Super Mario 64</name>
+   <coder>mkst</coder>
+   <version>0.1</version>
+   <release_date>202010060000</release_date>
+   <short_description>Super Mario 64 for Wii</short_description>
+   <long_description>Super Mario 64 Ported to Wii
+See https://github.com/mkst/sm64-port/tree/wii for more information.</long_description>
+ </app>

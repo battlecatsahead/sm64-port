@@ -1,4 +1,5 @@
-#ifdef TARGET_WII
+#ifdef TARGET_GX
+#ifdef __wii__
 
 #define Mtx __Mtx
 #define Vtx __Vtx
@@ -78,4 +79,5 @@ struct ControllerAPI controller_wii = {
     controller_wii_read
 };
 
+#endif
 #endif

@@ -1,6 +1,6 @@
 #include "../compat.h"
 
-#if (defined(__linux__) || defined(__BSD__)) && !defined(TARGET_WII)
+#if (defined(__linux__) || defined(__BSD__)) && !defined(TARGET_GX)
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

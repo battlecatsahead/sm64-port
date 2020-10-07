@@ -21,8 +21,9 @@ NON_MATCHING ?= 0
 TARGET_N64 ?= 0
 # Build for Emscripten/WebGL
 TARGET_WEB ?= 0
-# Build for Nintendo Wii
+# Build for Nintendo Gamecube/Wii
 TARGET_WII ?= 1
+TARGET_GAMECUBE ?= 0
 # Compiler to use (ido or gcc)
 COMPILER ?= ido
 
@@ -34,11 +35,13 @@ ifeq ($(TARGET_N64),0)
   TARGET_WINDOWS := 0
   ifeq ($(TARGET_WEB),0)
     ifeq ($(TARGET_WII),0)
-      ifeq ($(OS),Windows_NT)
-        TARGET_WINDOWS := 1
-      else
-        # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
-        TARGET_LINUX := 1
+      ifeq ($(TARGET_GAMECUBE),0)
+        ifeq ($(OS),Windows_NT)
+          TARGET_WINDOWS := 1
+        else
+          # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
+          TARGET_LINUX := 1
+        endif
       endif
     endif
   endif
@@ -51,8 +54,14 @@ ifeq ($(TARGET_N64),0)
       endif
     endif
   else
-    ifeq ($(TARGET_WII),0)
-      # On others, default to OpenGL
+    ifeq ($(TARGET_WII),1)
+      TARGET_GX := 1
+      GX_PLATFORM := wii
+    else ifeq ($(TARGET_GAMECUBE),1)
+      TARGET_GX := 1
+      GX_PLATFORM := cube
+    # On others, default to OpenGL
+    else
       ENABLE_OPENGL ?= 1
     endif
   endif
@@ -200,8 +209,8 @@ else
 ifeq ($(TARGET_WEB),1)
   BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_web
 else
-  ifeq ($(TARGET_WII),1)
-    BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_wii
+  ifeq ($(TARGET_GX),1)
+    BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_$(GX_PLATFORM)
   else
     BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_pc
   endif
@@ -215,7 +224,7 @@ else
 ifeq ($(TARGET_WINDOWS),1)
 EXE := $(BUILD_DIR)/$(TARGET).exe
 else
-  ifeq ($(TARGET_WII),1)
+  ifeq ($(TARGET_GX),1)
     EXE := $(BUILD_DIR)/$(TARGET).dol
   else
     EXE := $(BUILD_DIR)/$(TARGET)
@@ -276,7 +285,7 @@ else
 ifeq ($(TARGET_WEB),1)
   OPT_FLAGS := -O2 -g4 --source-map-base http://localhost:8080/
 else
-  OPT_FLAGS := -O2
+  OPT_FLAGS := -O2 -g
 endif
 endif
 
@@ -454,7 +463,7 @@ OBJDUMP := objdump
 OBJCOPY := objcopy
 PYTHON := python3
 
-ifeq ($(TARGET_WII),1)
+ifeq ($(TARGET_GX),1)
   CROSS   := $(DEVKITPPC)/bin/powerpc-eabi-
 
   CPP     := $(CROSS)cpp -P
@@ -480,11 +489,18 @@ ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
   PLATFORM_LDFLAGS := -lm -no-pie -s TOTAL_MEMORY=20MB -g4 --source-map-base http://localhost:8080/ -s "EXTRA_EXPORTED_RUNTIME_METHODS=['callMain']"
 endif
-ifeq ($(TARGET_WII),1)
-  include $(DEVKITPPC)/wii_rules
+ifeq ($(TARGET_GX),1)
+  ifeq ($(TARGET_WII),1)
+    include $(DEVKITPPC)/wii_rules
+  else
+    include $(DEVKITPPC)/gamecube_rules
+  endif
   LIBOGC := $(DEVKITPRO)/libogc
-  PLATFORM_CFLAGS  := $(MACHDEP) -DTARGET_WII -fomit-frame-pointer -fno-strict-aliasing -I$(LIBOGC)/include
-  PLATFORM_LDFLAGS := $(MACHDEP) -L$(LIBOGC)/lib/wii -g -lm -lasnd -lwiiuse -lbte -lfat -logc
+  PLATFORM_CFLAGS  := $(MACHDEP) -DTARGET_GX -fomit-frame-pointer -fno-strict-aliasing -I$(LIBOGC)/include
+  ifeq ($(TARGET_WII),1)
+    WII_LIBS := -lwiiuse -lbte
+  endif
+  PLATFORM_LDFLAGS := $(MACHDEP) -L$(LIBOGC)/lib/$(GX_PLATFORM) -g -lm -lasnd $(WII_LIBS) -lfat -logc
 endif
 
 PLATFORM_CFLAGS += -DNO_SEGMENTED_MEMORY -DUSE_SYSTEM_MALLOC
@@ -517,7 +533,7 @@ endif
 
 GFX_CFLAGS += -DWIDESCREEN
 
-ifeq ($(TARGET_WII),1)
+ifeq ($(TARGET_GX),1)
   MARCH_FLAGS :=
 else
   MARCH_FLAGS := -march=native
@@ -860,13 +876,14 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 	$(OBJDUMP) -D $< > $@
 
 else
-ifeq ($(TARGET_WII),1)
+ifeq ($(TARGET_GX),1)
 
 $(BUILD_DIR)/$(TARGET).elf: $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) wii/app_booter.binobj
 	$(LD) -L $(BUILD_DIR) -o $(BUILD_DIR)/$(TARGET).elf $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) wii/app_booter.binobj $(LDFLAGS)
 
 %.dol: %.elf
-	elf2dol $< $@
+	elf2dol $< $(BUILD_DIR)/boot.dol
+	cp wii/meta.xml $(BUILD_DIR)/meta.xml
 
 %.binobj: %.bin
 	$(JUST_LD) -r -b binary -o $@ $<
@@ -879,7 +896,6 @@ $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(
 	$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
 endif
 endif
-
 
 
 .PHONY: all clean distclean default diff test load libultra

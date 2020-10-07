@@ -5,6 +5,9 @@ extern bool         configFullscreen;
 extern unsigned int configKeyA;
 extern unsigned int configKeyB;
 extern unsigned int configKeyStart;
+#ifdef __gamecube__
+extern unsigned int configKeyL;
+#endif
 extern unsigned int configKeyR;
 extern unsigned int configKeyZ;
 extern unsigned int configKeyCUp;
